@@ -57,9 +57,15 @@ class LDAPLoginForm extends MemberLoginForm
         $this->ldapSecController = Injector::inst()->create('SilverStripe\\ActiveDirectory\\Control\\LDAPSecurityController');
 
         if (Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'allow_email_login')==='yes') {
-            $loginField = new TextField('Login', _t('LDAPLoginForm.USERNAMEOREMAIL', 'Username or email'), null, null, $this);
+            $loginField = TextField::create(
+                'Login',
+                _t('LDAPLoginForm.USERNAMEOREMAIL', 'Username or email'),
+                null,
+                null,
+                $this
+            );
         } else {
-            $loginField = new TextField('Login', _t('LDAPLoginForm.USERNAME', 'Username'), null, null, $this);
+            $loginField = TextField::create('Login', _t('LDAPLoginForm.USERNAME', 'Username'), null, null, $this);
         }
 
         $this->Fields()->replaceField('Email', $loginField);
@@ -75,13 +81,15 @@ class LDAPLoginForm extends MemberLoginForm
         // Users can't change passwords unless appropriate a LDAP user with write permissions is
         // configured the LDAP connection binding
         $this->Actions()->remove($this->Actions()->fieldByName('forgotPassword'));
-        $allowPasswordChange = Config::inst()->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService', 'allow_password_change');
+        $allowPasswordChange = Config::inst()
+            ->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService', 'allow_password_change');
         if ($allowPasswordChange && $name != 'LostPasswordForm' && !Member::currentUser()) {
-            $forgotPasswordLink = sprintf('<p id="ForgotPassword"><a href="%s">%s</a></p>',
+            $forgotPasswordLink = sprintf(
+                '<p id="ForgotPassword"><a href="%s">%s</a></p>',
                 $this->ldapSecController->Link('lostpassword'),
                 _t('Member.BUTTONLOSTPASSWORD', "I've lost my password")
             );
-            $forgotPassword = new LiteralField('forgotPassword', $forgotPasswordLink);
+            $forgotPassword = LiteralField::create('forgotPassword', $forgotPasswordLink);
             $this->Actions()->add($forgotPassword);
         }
 
@@ -118,7 +126,7 @@ JS;
         $login = trim($data['Login']);
 
         $service = Injector::inst()->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService');
-        if (Email::validEmailAddress($login)) {
+        if (Email::is_valid_address($login)) {
             if (Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'allow_email_login') != 'yes') {
                 $this->sessionMessage(
                     _t(

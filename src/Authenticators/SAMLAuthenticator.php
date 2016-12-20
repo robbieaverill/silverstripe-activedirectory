@@ -2,13 +2,13 @@
 
 namespace SilverStripe\ActiveDirectory\Authenticators;
 
-use Authenticator;
-use Config;
-use Controller;
-use Form;
-use Injector;
-use Session;
-use Director;
+use SilverStripe\Control\Controller;
+use Silverstripe\Control\Director;
+use SilverStripe\Control\Session;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Forms\Form;
+use SilverStripe\Security\Authenticator;
 
 /**
  * Class SAMLAuthenticator

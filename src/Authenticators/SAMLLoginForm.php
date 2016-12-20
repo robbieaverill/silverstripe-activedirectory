@@ -2,13 +2,13 @@
 
 namespace SilverStripe\ActiveDirectory\Authenticators;
 
-use LoginForm;
-use Session;
-use FieldList;
-use HiddenField;
-use FormAction;
-use Member;
-use Security;
+use SilverStripe\Control\Session;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\HiddenField;
+use SilverStripe\Forms\FormAction;
+use SilverStripe\Security\LoginForm;
+use SilverStripe\Security\Member;
+use SilverStripe\Security\Security;
 
 /**
  * Class SAMLLoginForm
@@ -48,27 +48,27 @@ class SAMLLoginForm extends LoginForm
         }
 
         if ($checkCurrentUser && $this->shouldShowLogoutFields()) {
-            $fields = new FieldList([
-                new HiddenField("AuthenticationMethod", null, $this->authenticator_class, $this)
+            $fields = FieldList::create([
+                HiddenField::create('AuthenticationMethod', null, $this->authenticator_class, $this)
             ]);
-            $actions = new FieldList([
-                new FormAction("logout", _t('Member.BUTTONLOGINOTHER', "Log in as someone else"))
+            $actions = FieldList::create([
+                FormAction::create('logout', _t('Member.BUTTONLOGINOTHER', 'Log in as someone else'))
             ]);
         } else {
             if (!$fields) {
-                $fields = new FieldList([
-                    new HiddenField("AuthenticationMethod", null, $this->authenticator_class, $this)
+                $fields = FieldList::create([
+                    HiddenField::create('AuthenticationMethod', null, $this->authenticator_class, $this)
                 ]);
             }
             if (!$actions) {
-                $actions = new FieldList([
-                    new FormAction('dologin', _t('Member.BUTTONLOGIN', "Log in"))
+                $actions = FieldList::create([
+                    FormAction::create('dologin', _t('Member.BUTTONLOGIN', 'Log in'))
                 ]);
             }
         }
 
         if ($backURL) {
-            $fields->push(new HiddenField('BackURL', 'BackURL', $backURL));
+            $fields->push(HiddenField::create('BackURL', 'BackURL', $backURL));
         }
 
         $this->setFormMethod('POST', true);

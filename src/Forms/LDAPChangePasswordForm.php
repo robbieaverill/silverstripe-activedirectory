@@ -143,10 +143,12 @@ class LDAPChangePasswordForm extends ChangePasswordForm
             // password history policy. Unfortunately we cannot support password history policy on password _reset_
             // at the moment, which means it will not be enforced on SilverStripe-driven email password reset.
             $oldPassword = !empty($data['OldPassword']) ? $data['OldPassword']: null;
-            $isValid = $service->setPassword($member, $data['NewPassword1'], $oldPassword);
+
+            /** @var ValidationResult $validationResult */
+            $validationResult = $service->setPassword($member, $data['NewPassword1'], $oldPassword);
 
             // try to catch connection and other errors that the ldap service can through
-            if ($isValid->valid()) {
+            if ($validationResult->isValid()) {
                 $member->logIn();
 
                 Session::clear('AutoLoginHash');
@@ -173,7 +175,8 @@ class LDAPChangePasswordForm extends ChangePasswordForm
                 }
             } else {
                 $this->clearMessage();
-                $this->sessionMessage($isValid->message(), "bad");
+                $messages = implode('. ', array_column($validationResult->getMessages(), 'message'));
+                $this->sessionMessage($messages, 'bad');
                 // redirect back to the form, instead of using redirectBack() which could send the user elsewhere.
                 return $this->controller->redirect($this->controller->Link('changepassword'));
             }

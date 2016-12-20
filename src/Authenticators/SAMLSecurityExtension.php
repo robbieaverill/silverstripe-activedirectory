@@ -64,6 +64,6 @@ class SAMLSecurityExtension extends Extension
         }
 
         $authenticator = Injector::inst()->create('SilverStripe\\ActiveDirectory\\Authenticators\\SAMLAuthenticator');
-        $authenticator->authenticate(["BackURL" => $backURL]);
+        $authenticator->authenticate(['BackURL' => $backURL]);
     }
 }
