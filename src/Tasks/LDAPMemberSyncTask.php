@@ -1,11 +1,26 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Tasks;
+
+use Exception;
+use SilverStripe\Control\Director;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Dev\BuildTask;
+use SilverStripe\ORM\DB;
+use SilverStripe\Security\Member;
+
 /**
  * Class LDAPMemberSyncTask
  *
  * A task to sync all users to the site using LDAP.
+ *
+ * @package activedirectory
  */
 class LDAPMemberSyncTask extends BuildTask
 {
+    /**
+     * @var array
+     */
     private static $dependencies = [
         'ldapService' => '%$LDAPService'
     ];
@@ -19,11 +34,18 @@ class LDAPMemberSyncTask extends BuildTask
      */
     private static $destructive = false;
 
+    /**
+     * @return string
+     */
     public function getTitle()
     {
         return _t('LDAPMemberSyncJob.SYNCTITLE', 'Sync all users from Active Directory');
     }
 
+    /**
+     * {@inheritDoc}
+     * @param HTTPRequest $request
+     */
     public function run($request)
     {
         // get all users from LDAP, but only get the attributes we need.
@@ -100,6 +122,11 @@ class LDAPMemberSyncTask extends BuildTask
         $this->log(sprintf('Done. Processed %s records. Duration: %s seconds', $count, round($end, 0)));
     }
 
+    /**
+     * Sends a message, formatted either for the CLI or browser
+     *
+     * @param string $message
+     */
     protected function log($message)
     {
         $message = sprintf('[%s] ', date('Y-m-d H:i:s')) . $message;

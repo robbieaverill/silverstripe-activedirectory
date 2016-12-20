@@ -1,8 +1,17 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Extensions;
+
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\ReadonlyField;
+use SilverStripe\ORM\DataExtension;
+
 /**
  * Class SAMLMemberExtension
  *
  * Adds mappings from IdP claim rules to SilverStripe {@link Member} fields.
+ *
+ * @package activedirectory
  */
 class SAMLMemberExtension extends DataExtension
 {
@@ -35,7 +44,7 @@ class SAMLMemberExtension extends DataExtension
      */
     public function updateCMSFields(FieldList $fields)
     {
-        $fields->replaceField('GUID', new ReadonlyField('GUID'));
+        $fields->replaceField('GUID', ReadonlyField::create('GUID'));
         $fields->removeFieldFromTab('Root', 'SAMLSessionIndex');
     }
 }

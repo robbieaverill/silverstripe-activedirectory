@@ -1,10 +1,24 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Authenticators;
+
+use SilverStripe\Control\Controller;
+use SilverStripe\Control\Email\Email;
+use SilverStripe\Control\Session;
+use SilverStripe\Core\Cofig\Config;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Forms\Form;
+use SilverStripe\Security\Authenticator;
+use SilverStripe\Security\Member;
+
 /**
  * Class LDAPAuthenticator
  *
  * Authenticate a user against LDAP, without the single sign-on component.
  *
  * See SAMLAuthenticator for further information.
+ *
+ * @package activedirectory
  */
 class LDAPAuthenticator extends Authenticator
 {
@@ -39,14 +53,14 @@ class LDAPAuthenticator extends Authenticator
      *
      * @var string
      */
-    private static $fallback_authenticator_class = 'MemberAuthenticator';
+    private static $fallback_authenticator_class = 'SilverStripe\\Security\\MemberAuthenticator';
 
     /**
      * @return string
      */
     public static function get_name()
     {
-        return Config::inst()->get('LDAPAuthenticator', 'name');
+        return Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'name');
     }
 
     /**
@@ -64,14 +78,14 @@ class LDAPAuthenticator extends Authenticator
      * @param array $data
      * @param Form $form
      * @return bool|Member|void
-     * @throws SS_HTTPResponse_Exception
+     * @throws HTTPResponse_Exception
      */
     public static function authenticate($data, Form $form = null)
     {
-        $service = Injector::inst()->get('LDAPService');
+        $service = Injector::inst()->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService');
         $login = trim($data['Login']);
         if (Email::validEmailAddress($login)) {
-            if (Config::inst()->get('LDAPAuthenticator', 'allow_email_login')!='yes') {
+            if (Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'allow_email_login') != 'yes') {
                 $form->sessionMessage(
                     _t(
                         'LDAPAuthenticator.PLEASEUSEUSERNAME',
@@ -86,7 +100,7 @@ class LDAPAuthenticator extends Authenticator
 
             // No user found with this email.
             if (!$username) {
-                if (Config::inst()->get('LDAPAuthenticator', 'fallback_authenticator') === 'yes') {
+                if (Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'fallback_authenticator') === 'yes') {
                     $fallbackMember = self::fallback_authenticate($data, $form);
                     if ($fallbackMember) {
                         return $fallbackMember;
@@ -103,7 +117,7 @@ class LDAPAuthenticator extends Authenticator
         $result = $service->authenticate($username, $data['Password']);
         $success = $result['success'] === true;
         if (!$success) {
-            if (Config::inst()->get('LDAPAuthenticator', 'fallback_authenticator') === 'yes') {
+            if (Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'fallback_authenticator') === 'yes') {
                 $fallbackMember = self::fallback_authenticate($data, $form);
                 if ($fallbackMember) {
                     return $fallbackMember;
@@ -153,10 +167,15 @@ class LDAPAuthenticator extends Authenticator
     protected static function fallback_authenticate($data, Form $form = null)
     {
         return call_user_func(
-            [Config::inst()->get('LDAPAuthenticator', 'fallback_authenticator_class'), 'authenticate'],
+            [
+                Config::inst()->get(
+                    'SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator',
+                    'fallback_authenticator_class'
+                ),
+                'authenticate'
+            ],
             array_merge($data, ['Email' => $data['Login']]),
             $form
         );
     }
-
 }

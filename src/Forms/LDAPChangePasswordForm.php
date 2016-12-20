@@ -1,5 +1,20 @@
 <?php
 
+namespace SilverStripe\ActiveDirectory\Forms;
+
+use Exception;
+use SilverStripe\Control\Director;
+use SilverStripe\Control\HTTP;
+use SilverStripe\Control\Session;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Forms\TextField;
+use SilverStripe\Security\ChangePasswordForm;
+use SilverStripe\Security\Member;
+
+/**
+ * @package activedirectory
+ */
 class LDAPChangePasswordForm extends ChangePasswordForm
 {
     /**
@@ -23,15 +38,31 @@ class LDAPChangePasswordForm extends ChangePasswordForm
             }
         }
 
-        $data = Injector::inst()->get('LDAPService')->getUserByGUID($member->GUID, ['samaccountname']);
+        $data = Injector::inst()
+            ->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService')
+            ->getUserByGUID($member->GUID, ['samaccountname']);
 
         $emailField = null;
         $usernameField = null;
-        if (Config::inst()->get('LDAPAuthenticator', 'allow_email_login')==='yes' && !empty($member->Email)) {
-            $emailField = new TextField('Email', _t('LDAPLoginForm.USERNAMEOREMAIL', 'Email'), $member->Email, null, $this);
+        if (Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'allow_email_login') === 'yes'
+            && !empty($member->Email)
+        ) {
+            $emailField = TextField::create(
+                'Email',
+                _t('LDAPLoginForm.USERNAMEOREMAIL', 'Email'),
+                $member->Email,
+                null,
+                $this
+            );
         }
         if (!empty($data['samaccountname'])) {
-            $usernameField = new TextField('Username', _t('LDAPLoginForm.USERNAME', 'Username'), $data['samaccountname'], null, $this);
+            $usernameField = TextField::create(
+                'Username',
+                _t('LDAPLoginForm.USERNAME', 'Username'),
+                $data['samaccountname'],
+                null,
+                $this
+            );
         }
 
         if ($emailField) {
@@ -48,23 +79,27 @@ class LDAPChangePasswordForm extends ChangePasswordForm
      * Change the password
      *
      * @param array $data The user submitted data
-     * @return SS_HTTPResponse
+     * @return HTTPResponse
      */
     public function doChangePassword(array $data)
     {
         /**
          * @var LDAPService $service
          */
-        $service = Injector::inst()->get('LDAPService');
+        $service = Injector::inst()->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService');
         $member = Member::currentUser();
         if ($member) {
             try {
                 $userData = $service->getUserByGUID($member->GUID);
             } catch (Exception $e) {
-                SS_Log::log($e->getMessage(), SS_Log::ERR);
+                Injector::inst()->get('Logger')->error($e->getMessage());
+
                 $this->clearMessage();
                 $this->sessionMessage(
-                    _t('LDAPAuthenticator.NOUSER', 'Your account hasn\'t been setup properly, please contact an administrator.'),
+                    _t(
+                        'LDAPAuthenticator.NOUSER',
+                        'Your account hasn\'t been setup properly, please contact an administrator.'
+                    ),
                     'bad'
                 );
                 return $this->controller->redirect($this->controller->Link('changepassword'));
@@ -73,8 +108,8 @@ class LDAPChangePasswordForm extends ChangePasswordForm
             if (!$loginResult['success']) {
                 $this->clearMessage();
                 $this->sessionMessage(
-                    _t('Member.ERRORPASSWORDNOTMATCH', "Your current password does not match, please try again"),
-                    "bad"
+                    _t('Member.ERRORPASSWORDNOTMATCH', 'Your current password does not match, please try again'),
+                    'bad'
                 );
                 // redirect back to the form, instead of using redirectBack() which could send the user elsewhere.
                 return $this->controller->redirect($this->controller->Link('changepassword'));
@@ -98,7 +133,8 @@ class LDAPChangePasswordForm extends ChangePasswordForm
             $this->clearMessage();
             $this->sessionMessage(
                 _t('Member.EMPTYNEWPASSWORD', "The new password can't be empty, please try again"),
-                "bad");
+                'bad'
+            );
 
             // redirect back to the form, instead of using redirectBack() which could send the user elsewhere.
             return $this->controller->redirect($this->controller->Link('changepassword'));
@@ -130,7 +166,8 @@ class LDAPChangePasswordForm extends ChangePasswordForm
                     // Redirect to default location - the login form saying "You are logged in as..."
                     $redirectURL = HTTP::setGetVar(
                         'BackURL',
-                        Director::absoluteBaseURL(), $this->controller->Link('login')
+                        Director::absoluteBaseURL(),
+                        $this->controller->Link('login')
                     );
                     return $this->controller->redirect($redirectURL);
                 }
@@ -143,8 +180,9 @@ class LDAPChangePasswordForm extends ChangePasswordForm
         } else {
             $this->clearMessage();
             $this->sessionMessage(
-                _t('Member.ERRORNEWPASSWORD', "You have entered your new password differently, try again"),
-                "bad");
+                _t('Member.ERRORNEWPASSWORD', 'You have entered your new password differently, try again'),
+                'bad'
+            );
 
             // redirect back to the form, instead of using redirectBack() which could send the user elsewhere.
             return $this->controller->redirect($this->controller->Link('changepassword'));

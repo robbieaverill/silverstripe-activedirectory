@@ -1,8 +1,20 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Extensions;
+
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\ReadonlyField;
+use SilverStripe\Forms\LiteralField;
+use SilverStripe\ORM\DataExtension;
+use SilverStripe\Forms\GridField\GridField;
+use SilverStripe\Forms\GridField\GridFieldConfig_RecordEditor;
+
 /**
  * Class LDAPGroupExtension
  *
  * Adds a field to map an LDAP group to a SilverStripe {@link Group}
+ *
+ * @package activedirectory
  */
 class LDAPGroupExtension extends DataExtension
 {
@@ -13,7 +25,7 @@ class LDAPGroupExtension extends DataExtension
         // Unique user identifier, same field is used by SAMLMemberExtension
         'GUID' => 'Varchar(50)',
         'DN' => 'Text',
-        'LastSynced' => 'SS_Datetime'
+        'LastSynced' => 'DBDatetime'
     ];
 
     /**
@@ -21,7 +33,7 @@ class LDAPGroupExtension extends DataExtension
      * @var array
      */
     private static $has_many = [
-        'LDAPGroupMappings' => 'LDAPGroupMapping'
+        'LDAPGroupMappings' => 'SilverStripe\\ActiveDirectory\\Model\\LDAPGroupMapping'
     ];
 
     /**
@@ -39,21 +51,28 @@ class LDAPGroupExtension extends DataExtension
         ]
     ];
 
+    /**
+     * {@inheritDoc}
+     * @param FieldList $fields
+     */
     public function updateCMSFields(FieldList $fields)
     {
         // Add read-only LDAP metadata fields.
-        $fields->addFieldToTab('Root.LDAP', new ReadonlyField('GUID'));
-        $fields->addFieldToTab('Root.LDAP', new ReadonlyField('DN'));
-        $fields->addFieldToTab('Root.LDAP', new ReadonlyField(
-            'LastSynced',
-            _t('LDAPGroupExtension.LASTSYNCED', 'Last synced'))
+        $fields->addFieldToTab('Root.LDAP', ReadonlyField::create('GUID'));
+        $fields->addFieldToTab('Root.LDAP', ReadonlyField::create('DN'));
+        $fields->addFieldToTab(
+            'Root.LDAP',
+            ReadonlyField::create(
+                'LastSynced',
+                _t('LDAPGroupExtension.LASTSYNCED', 'Last synced')
+            )
         );
 
         if ($this->owner->GUID) {
-            $fields->replaceField('Title', new ReadonlyField('Title'));
-            $fields->replaceField('Description', new ReadonlyField('Description'));
+            $fields->replaceField('Title', ReadonlyField::create('Title'));
+            $fields->replaceField('Description', ReadonlyField::create('Description'));
             // Surface the code which is normally hidden from the CMS user.
-            $fields->addFieldToTab('Root.Members', new ReadonlyField('Code'), 'Members');
+            $fields->addFieldToTab('Root.Members', ReadonlyField::create('Code'), 'Members');
 
             $message = _t(
                 'LDAPGroupExtension.INFOIMPORTED',
@@ -68,7 +87,7 @@ class LDAPGroupExtension extends DataExtension
                 'Title'
             );
 
-            $fields->addFieldToTab('Root.LDAP', new ReadonlyField(
+            $fields->addFieldToTab('Root.LDAP', ReadonlyField::create(
                 'LDAPGroupMappingsRO',
                 _t('LDAPGroupExtension.AUTOMAPPEDGROUPS', 'Automatically mapped LDAP Groups'),
                 implode('; ', $this->owner->LDAPGroupMappings()->column('DN'))

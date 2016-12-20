@@ -1,8 +1,19 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Authenticators;
+
+use SilverStripe\Control\Session;
+use SilverStripe\Core\Extension;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Security\Authenticator;
+use SilverStripe\Security\Member;
+
 /**
  * Class SAMLSecurityExtension
  *
  * Extensions to the {@link Security} controller to support {@link SAMLAuthenticator}
+ *
+ * @package activedirectory
  */
 class SAMLSecurityExtension extends Extension
 {
@@ -18,7 +29,7 @@ class SAMLSecurityExtension extends Extension
      */
     public function onBeforeSecurityLogin()
     {
-        if (Authenticator::get_default_authenticator() != 'SAMLAuthenticator') {
+        if (Authenticator::get_default_authenticator() != 'SilverStripe\\ActiveDirectory\\Authenticators\\SAMLAuthenticator') {
             return;
         }
 
@@ -52,7 +63,7 @@ class SAMLSecurityExtension extends Extension
             $backURL = $this->owner->request->getVar('BackURL');
         }
 
-        $authenticator = Injector::inst()->create('SAMLAuthenticator');
+        $authenticator = Injector::inst()->create('SilverStripe\\ActiveDirectory\\Authenticators\\SAMLAuthenticator');
         $authenticator->authenticate(["BackURL" => $backURL]);
     }
 }

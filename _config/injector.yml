@@ -1,0 +1,8 @@
+---
+Name: activedirectoryinjector
+---
+SilverStripe\Core\Injector\Injector:
+  LDAPService:
+    class: SilverStripe\ActiveDirectory\Services\LDAPService
+  LDAPGateway:
+    class: SilverStripe\ActiveDirectory\Model\LDAPGateway

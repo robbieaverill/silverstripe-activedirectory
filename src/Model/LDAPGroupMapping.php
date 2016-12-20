@@ -1,4 +1,10 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Model;
+
+use SilverStripe\Forms\DropdownField;
+use SilverStripe\ORM\DataObject;
+
 /**
  * Class LDAPGroupMapping
  *
@@ -18,7 +24,7 @@ class LDAPGroupMapping extends DataObject
      * @var array
      */
     private static $has_one = [
-        'Group' => 'Group'
+        'Group' => 'SilverStripe\\Security\\Group'
     ];
 
     /**
@@ -35,12 +41,16 @@ class LDAPGroupMapping extends DataObject
         'ldapService' => '%$LDAPService'
     ];
 
+    /**
+     * {@inheritDoc}
+     * @return FieldList
+     */
     public function getCMSFields()
     {
         $fields = parent::getCMSFields();
         $fields->removeByName('DN');
 
-        $field = new DropdownField('DN', _t('LDAPGroupMapping.LDAPGROUP', 'LDAP Group'));
+        $field = DropdownField::create('DN', _t('LDAPGroupMapping.LDAPGROUP', 'LDAP Group'));
         $field->setEmptyString(_t('LDAPGroupMapping.SELECTONE', 'Select one'));
         $groups = $this->ldapService->getGroups(true, ['dn', 'name']);
         if ($groups) {
@@ -55,8 +65,11 @@ class LDAPGroupMapping extends DataObject
         $fields->removeByName('Scope');
         $fields->addFieldToTab(
             'Root.Main',
-            new DropdownField('Scope', _t('LDAPGroupMapping.SCOPE', 'Scope'), [
-                'Subtree' => _t('LDAPGroupMapping.SUBTREE_DESCRIPTION', 'Users within this group and all nested groups within'),
+            DropdownField::create('Scope', _t('LDAPGroupMapping.SCOPE', 'Scope'), [
+                'Subtree' => _t(
+                    'LDAPGroupMapping.SUBTREE_DESCRIPTION',
+                    'Users within this group and all nested groups within'
+                ),
                 'OneLevel' => _t('LDAPGroupMapping.ONELEVEL_DESCRIPTION', 'Only users within this group'),
             ])
         );

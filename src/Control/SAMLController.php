@@ -1,9 +1,25 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Control;
+
+use Exception;
+use OneLogin_Saml2_Error;
+use SilverStripe\ActiveDirectory\Model\LDAPUtil;
+use SilverStripe\Control\Controller;
+use SilverStripe\Control\Director;
+use SilverStripe\Control\Session;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Forms\Form;
+use SilverStirpe\Security\Member;
+use SilverStripe\Security\Security;
+
 /**
  * Class SAMLController
  *
  * This controller handles serving metadata requests for the IdP, as well as handling
  * creating new users and logging them into SilverStripe after being authenticated at the IdP.
+ *
+ * @package activedirectory
  */
 class SAMLController extends Controller
 {
@@ -33,12 +49,12 @@ class SAMLController extends Controller
      */
     public function acs()
     {
-        $auth = Injector::inst()->get('SAMLHelper')->getSAMLAuth();
+        $auth = Injector::inst()->get('SilverStripe\\ActiveDirectory\\Helpers\\SAMLHelper')->getSAMLAuth();
         $auth->processResponse();
 
         $error = $auth->getLastErrorReason();
         if (!empty($error)) {
-            SS_Log::log($error, SS_Log::ERR);
+            $this->getLogger()->error($error);
             Form::messageForForm("SAMLLoginForm_LoginForm", "Authentication error: '{$error}'", 'bad');
             Session::save();
             return $this->getRedirect();
@@ -62,7 +78,7 @@ class SAMLController extends Controller
         $guid = LDAPUtil::bin_to_str_guid($decodedNameId);
         if (!LDAPUtil::validGuid($guid)) {
             $errorMessage = "Not a valid GUID '{$guid}' recieved from server.";
-            SS_Log::log($errorMessage, SS_Log::ERR);
+            $this->getLogger()->error($errorMessage);
             Form::messageForForm("SAMLLoginForm_LoginForm", $errorMessage, 'bad');
             Session::save();
             return $this->getRedirect();
@@ -80,11 +96,11 @@ class SAMLController extends Controller
 
         foreach ($member->config()->claims_field_mappings as $claim => $field) {
             if (!isset($attributes[$claim][0])) {
-                SS_Log::log(
+                $this->getLogger()->warn(
                     sprintf(
                         'Claim rule \'%s\' configured in LDAPMember.claims_field_mappings, but wasn\'t passed through. Please check IdP claim rules.',
                         $claim
-                    ), SS_Log::WARN
+                    )
                 );
 
                 continue;
@@ -113,7 +129,7 @@ class SAMLController extends Controller
     public function metadata()
     {
         try {
-            $auth = Injector::inst()->get('SAMLHelper')->getSAMLAuth();
+            $auth = Injector::inst()->get('SilverStripe\\ActiveDirectory\\Helpers\\SAMLHelper')->getSAMLAuth();
             $settings = $auth->getSettings();
             $metadata = $settings->getSPMetadata();
             $errors = $settings->validateMetadata($metadata);
@@ -127,7 +143,7 @@ class SAMLController extends Controller
                 );
             }
         } catch (Exception $e) {
-            SS_Log::log($e->getMessage(), SS_Log::ERR);
+            $this->getLogger()->error($e->getMessage());
             echo $e->getMessage();
         }
     }
@@ -154,5 +170,15 @@ class SAMLController extends Controller
 
         // fallback to redirect back to home page
         return $this->redirect(Director::absoluteBaseURL());
+    }
+
+    /**
+     * Get a logger
+     *
+     * @return Psr\Log\LoggerInterface
+     */
+    public function getLogger()
+    {
+        return Injector::inst()->get('Logger');
     }
 }

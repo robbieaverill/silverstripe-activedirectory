@@ -1,8 +1,26 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Authenticators;
+
+use SilverStripe\ActiveDirectory\Control\LDAPSecurityController;
+use SilverStripe\Control\Email\Email;
+use SilverStripe\Control\Session;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Forms\LiteralField;
+use SilverStripe\Forms\RequiredFields;
+use SilverStripe\Forms\TextField;
+use SilverStripe\Security\Member;
+use SilverStripe\Security\MemberLoginForm;
+use SilverStripe\Security\Security;
+use SilverStripe\View\Requirements;
+
 /**
  * Class LDAPLoginForm
  *
  * This not very interesting in itself. It's pretty much boiler-plate code to access the authenticator.
+ *
+ * @package activedirectory
  */
 class LDAPLoginForm extends MemberLoginForm
 {
@@ -15,7 +33,7 @@ class LDAPLoginForm extends MemberLoginForm
     /**
      * @var string
      */
-    protected $authenticator_class = 'LDAPAuthenticator';
+    protected $authenticator_class = 'SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator';
 
     /**
      * @var LDAPSecurityController
@@ -36,9 +54,9 @@ class LDAPLoginForm extends MemberLoginForm
         parent::__construct($controller, $name, $fields, $actions, $checkCurrentUser);
 
         // will be used to get correct Link()
-        $this->ldapSecController = Injector::inst()->create('LDAPSecurityController');
+        $this->ldapSecController = Injector::inst()->create('SilverStripe\\ActiveDirectory\\Control\\LDAPSecurityController');
 
-        if (Config::inst()->get('LDAPAuthenticator', 'allow_email_login')==='yes') {
+        if (Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'allow_email_login')==='yes') {
             $loginField = new TextField('Login', _t('LDAPLoginForm.USERNAMEOREMAIL', 'Username or email'), null, null, $this);
         } else {
             $loginField = new TextField('Login', _t('LDAPLoginForm.USERNAME', 'Username'), null, null, $this);
@@ -57,7 +75,7 @@ class LDAPLoginForm extends MemberLoginForm
         // Users can't change passwords unless appropriate a LDAP user with write permissions is
         // configured the LDAP connection binding
         $this->Actions()->remove($this->Actions()->fieldByName('forgotPassword'));
-        $allowPasswordChange = Config::inst()->get('LDAPService', 'allow_password_change');
+        $allowPasswordChange = Config::inst()->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService', 'allow_password_change');
         if ($allowPasswordChange && $name != 'LostPasswordForm' && !Member::currentUser()) {
             $forgotPasswordLink = sprintf('<p id="ForgotPassword"><a href="%s">%s</a></p>',
                 $this->ldapSecController->Link('lostpassword'),
@@ -99,9 +117,9 @@ JS;
         // No need to protect against injections, LDAPService will ensure that this is safe
         $login = trim($data['Login']);
 
-        $service = Injector::inst()->get('LDAPService');
+        $service = Injector::inst()->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService');
         if (Email::validEmailAddress($login)) {
-            if (Config::inst()->get('LDAPAuthenticator', 'allow_email_login')!='yes') {
+            if (Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'allow_email_login') != 'yes') {
                 $this->sessionMessage(
                     _t(
                         'LDAPLoginForm.USERNAMEINSTEADOFEMAIL',
@@ -142,8 +160,11 @@ JS;
         }
 
         if ($member) {
+            /** @see MemberLoginForm::forgotPassword */
             $token = $member->generateAutologinTokenAndStoreHash();
-            $e = Member_ForgotPasswordEmail::create();
+            $e = Email::create();
+            $e->setSubject(_t('Member.SUBJECTPASSWORDRESET', 'Your password reset link', 'Email subject'));
+            $e->setTemplate('ForgotPasswordEmail');
             $e->populateTemplate($member);
             $e->populateTemplate([
                 'PasswordResetLink' => LDAPSecurityController::getPasswordResetLink($member, $token)
@@ -156,7 +177,7 @@ JS;
             // regardless whether the email address actually exists
             $this->controller->redirect($this->controller->Link('passwordsent/') . urlencode($data['Login']));
         } else {
-            if (Config::inst()->get('LDAPAuthenticator', 'allow_email_login')==='yes') {
+            if (Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'allow_email_login') === 'yes') {
                 $this->sessionMessage(
                     _t(
                         'LDAPLoginForm.ENTERUSERNAMEOREMAIL',

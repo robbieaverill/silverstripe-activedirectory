@@ -1,4 +1,16 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Model;
+
+use Exception;
+use SilverStripe\Core\Object;
+use Zend\Authentication\Adapter\Ldap as LdapAdapter;
+use Zend\Authentication\AuthenticationService;
+use Zend\Ldap\Exception\LdapException;
+use Zend\Ldap\Filter\AbstractFilter;
+use Zend\Ldap\Ldap;
+use Zend\Stdlib\ErrorHandler;
+
 /**
  * Class LDAPGateway
  *
@@ -24,7 +36,7 @@ class LDAPGateway extends Object
         // due to dependency injection this class can be created without any LDAP options set
         // and \Zend\Ldap\Ldap will throw a warning with an empty array
         if (count($this->config()->options)) {
-            $this->ldap = new Zend\Ldap\Ldap($this->config()->options);
+            $this->ldap = new Ldap($this->config()->options);
         }
     }
 
@@ -33,12 +45,13 @@ class LDAPGateway extends Object
      *
      * @param string $filter The string to filter by, e.g. (objectClass=user)
      * @param null|string $baseDn The DN to search from. Default is the baseDn option in the connection if not given
-     * @param int $scope The scope to perform the search. Zend_Ldap::SEARCH_SCOPE_ONE, Zend_LDAP::SEARCH_SCOPE_BASE. Default is Zend_Ldap::SEARCH_SCOPE_SUB
+     * @param int $scope The scope to perform the search. Zend_Ldap::SEARCH_SCOPE_ONE, Zend_LDAP::SEARCH_SCOPE_BASE.
+     *                   Default is Zend_Ldap::SEARCH_SCOPE_SUB
      * @param array $attributes Restrict to specific AD attributes. An empty array will return all attributes
      * @param string $sort Sort results by this attribute if given
      * @return array
      */
-    protected function search($filter, $baseDn = null, $scope = Zend\Ldap\Ldap::SEARCH_SCOPE_SUB, $attributes = [], $sort = '')
+    protected function search($filter, $baseDn = null, $scope = Ldap::SEARCH_SCOPE_SUB, $attributes = [], $sort = '')
     {
         $records = $this->ldap->search($filter, $baseDn, $scope, $attributes, $sort);
 
@@ -78,8 +91,8 @@ class LDAPGateway extends Object
      */
     public function authenticate($username, $password)
     {
-        $auth = new Zend\Authentication\AuthenticationService();
-        $adapter = new Zend\Authentication\Adapter\Ldap([$this->config()->options], $username, $password);
+        $auth = new AuthenticationService();
+        $adapter = new LdapAdapter([$this->config()->options], $username, $password);
         return $auth->authenticate($adapter);
     }
 
@@ -92,7 +105,7 @@ class LDAPGateway extends Object
      * @param string $sort Sort results by this attribute if given
      * @return array
      */
-    public function getNodes($baseDn = null, $scope = Zend\Ldap\Ldap::SEARCH_SCOPE_SUB, $attributes = [], $sort = '')
+    public function getNodes($baseDn = null, $scope = Ldap::SEARCH_SCOPE_SUB, $attributes = [], $sort = '')
     {
         return $this->search('(|(objectClass=organizationalUnit)(objectClass=container)(objectClass=domain))', $baseDn, $scope, $attributes, $sort);
     }
@@ -106,7 +119,7 @@ class LDAPGateway extends Object
      * @param string $sort Sort results by this attribute if given
      * @return array
      */
-    public function getGroups($baseDn = null, $scope = Zend\Ldap\Ldap::SEARCH_SCOPE_SUB, $attributes = [], $sort = '')
+    public function getGroups($baseDn = null, $scope = Ldap::SEARCH_SCOPE_SUB, $attributes = [], $sort = '')
     {
         return $this->search('(objectClass=group)', $baseDn, $scope, $attributes, $sort);
     }
@@ -120,7 +133,7 @@ class LDAPGateway extends Object
      * @param array $attributes Restrict to specific AD attributes. An empty array will return all attributes
      * @return array
      */
-    public function getNestedGroups($dn, $baseDn = null, $scope = Zend\Ldap\Ldap::SEARCH_SCOPE_SUB, $attributes = [])
+    public function getNestedGroups($dn, $baseDn = null, $scope = Ldap::SEARCH_SCOPE_SUB, $attributes = [])
     {
         return $this->search(
             sprintf('(&(objectClass=group)(memberOf:1.2.840.113556.1.4.1941:=%s))', $dn),
@@ -139,7 +152,7 @@ class LDAPGateway extends Object
      * @param array $attributes Restrict to specific AD attributes. An empty array will return all attributes
      * @return array
      */
-    public function getGroupByGUID($guid, $baseDn = null, $scope = Zend\Ldap\Ldap::SEARCH_SCOPE_SUB, $attributes = [])
+    public function getGroupByGUID($guid, $baseDn = null, $scope = Ldap::SEARCH_SCOPE_SUB, $attributes = [])
     {
         return $this->search(
             sprintf('(&(objectClass=group)(objectGUID=%s))', LDAPUtil::str_to_hex_guid($guid, true)),
@@ -158,7 +171,7 @@ class LDAPGateway extends Object
      * @param array $attributes Restrict to specific AD attributes. An empty array will return all attributes
      * @return array
      */
-    public function getGroupByDN($dn, $baseDn = null, $scope = Zend\Ldap\Ldap::SEARCH_SCOPE_SUB, $attributes = [])
+    public function getGroupByDN($dn, $baseDn = null, $scope = Ldap::SEARCH_SCOPE_SUB, $attributes = [])
     {
         return $this->search(
             sprintf('(&(objectClass=group)(distinguishedname=%s))', $dn),
@@ -194,7 +207,7 @@ class LDAPGateway extends Object
      * @param string $guid
      * @return array
      */
-    public function getUserByGUID($guid, $baseDn = null, $scope = Zend\Ldap\Ldap::SEARCH_SCOPE_SUB, $attributes = [])
+    public function getUserByGUID($guid, $baseDn = null, $scope = Ldap::SEARCH_SCOPE_SUB, $attributes = [])
     {
         return $this->search(
             sprintf('(&(objectClass=user)(objectGUID=%s))', LDAPUtil::str_to_hex_guid($guid, true)),
@@ -213,7 +226,7 @@ class LDAPGateway extends Object
      * @param array $attributes Restrict to specific AD attributes. An empty array will return all attributes
      * @return array
      */
-    public function getUserByDN($dn, $baseDn = null, $scope = Zend\Ldap\Ldap::SEARCH_SCOPE_SUB, $attributes = [])
+    public function getUserByDN($dn, $baseDn = null, $scope = Ldap::SEARCH_SCOPE_SUB, $attributes = [])
     {
         return $this->search(
             sprintf('(&(objectClass=user)(distinguishedname=%s))', $dn),
@@ -229,10 +242,10 @@ class LDAPGateway extends Object
      * @param string $email
      * @return array
      */
-    public function getUserByEmail($email, $baseDn = null, $scope = Zend\Ldap\Ldap::SEARCH_SCOPE_SUB, $attributes = [])
+    public function getUserByEmail($email, $baseDn = null, $scope = Ldap::SEARCH_SCOPE_SUB, $attributes = [])
     {
         return $this->search(
-            sprintf('(&(objectClass=user)(mail=%s))', Zend\Ldap\Filter\AbstractFilter::escapeValue($email)),
+            sprintf('(&(objectClass=user)(mail=%s))', AbstractFilter::escapeValue($email)),
             $baseDn,
             $scope,
             $attributes
@@ -249,7 +262,7 @@ class LDAPGateway extends Object
      * @return array
      * @throws Exception
      */
-    public function getUserByUsername($username, $baseDn = null, $scope = Zend\Ldap\Ldap::SEARCH_SCOPE_SUB, $attributes = [])
+    public function getUserByUsername($username, $baseDn = null, $scope = Ldap::SEARCH_SCOPE_SUB, $attributes = [])
     {
         $options = $this->config()->options;
         $option = isset($options['accountCanonicalForm']) ? $options['accountCanonicalForm'] : null;
@@ -258,22 +271,23 @@ class LDAPGateway extends Object
         // $options['accountCanonicalForm']
         $username = $this->ldap->getCanonicalAccountName($username, $option);
         switch ($option) {
-            case Zend\Ldap\Ldap::ACCTNAME_FORM_USERNAME: // traditional style usernames, e.g. alice
-                $filter = sprintf('(&(objectClass=user)(samaccountname=%s))', Zend\Ldap\Filter\AbstractFilter::escapeValue($username));
+            case Ldap::ACCTNAME_FORM_USERNAME: // traditional style usernames, e.g. alice
+                $filter = sprintf('(&(objectClass=user)(samaccountname=%s))', AbstractFilter::escapeValue($username));
                 break;
-            case Zend\Ldap\Ldap::ACCTNAME_FORM_BACKSLASH: // backslash style usernames, e.g. FOO\alice
+            case Ldap::ACCTNAME_FORM_BACKSLASH: // backslash style usernames, e.g. FOO\alice
                 // @todo Not supported yet!
                 throw new Exception('Backslash style not supported in LDAPGateway::getUserByUsername()!');
                 break;
-            case Zend\Ldap\Ldap::ACCTNAME_FORM_PRINCIPAL: // principal style usernames, e.g. alice@foo.com
-                $filter = sprintf('(&(objectClass=user)(userprincipalname=%s))', Zend\Ldap\Filter\AbstractFilter::escapeValue($username));
+            case Ldap::ACCTNAME_FORM_PRINCIPAL: // principal style usernames, e.g. alice@foo.com
+                $filter = sprintf('(&(objectClass=user)(userprincipalname=%s))', AbstractFilter::escapeValue($username));
                 break;
-            case Zend\Ldap\Ldap::ACCTNAME_FORM_DN: // distinguished name, e.g. CN=someone,DC=example,DC=co,DC=nz
+            case Ldap::ACCTNAME_FORM_DN: // distinguished name, e.g. CN=someone,DC=example,DC=co,DC=nz
                 // @todo Not supported yet!
                 throw new Exception('DN style not supported in LDAPGateway::getUserByUsername()!');
                 break;
             default: // default to principal style
-                $filter = sprintf('(&(objectClass=user)(userprincipalname=%s))', Zend\Ldap\Filter\AbstractFilter::escapeValue($username));
+                $filter = sprintf('(&(objectClass=user)(userprincipalname=%s))', AbstractFilter::escapeValue($username));
+                break;
         }
 
         return $this->search($filter, $baseDn, $scope, $attributes);
@@ -282,8 +296,9 @@ class LDAPGateway extends Object
     /**
      * Get a canonical username from the record based on the connection settings.
      *
-     * @param array $data
+     * @param  array $data
      * @return string
+     * @throws Exception
      */
     public function getCanonicalUsername($data)
     {
@@ -291,22 +306,22 @@ class LDAPGateway extends Object
         $option = isset($options['accountCanonicalForm']) ? $options['accountCanonicalForm'] : null;
 
         switch ($option) {
-            case Zend\Ldap\Ldap::ACCTNAME_FORM_USERNAME: // traditional style usernames, e.g. alice
+            case Ldap::ACCTNAME_FORM_USERNAME: // traditional style usernames, e.g. alice
                 if (empty($data['samaccountname'])) {
                     throw new \Exception('Could not extract canonical username: samaccountname field missing');
                 }
                 return $data['samaccountname'];
-            case Zend\Ldap\Ldap::ACCTNAME_FORM_BACKSLASH: // backslash style usernames, e.g. FOO\alice
+            case Ldap::ACCTNAME_FORM_BACKSLASH: // backslash style usernames, e.g. FOO\alice
                 // @todo Not supported yet!
                 throw new Exception('Backslash style not supported in LDAPGateway::getUsernameByEmail()!');
-            case Zend\Ldap\Ldap::ACCTNAME_FORM_PRINCIPAL: // principal style usernames, e.g. alice@foo.com
+            case Ldap::ACCTNAME_FORM_PRINCIPAL: // principal style usernames, e.g. alice@foo.com
                 if (empty($data['userprincipalname'])) {
-                    throw new \Exception('Could not extract canonical username: userprincipalname field missing');
+                    throw new Exception('Could not extract canonical username: userprincipalname field missing');
                 }
                 return $data['userprincipalname'];
             default: // default to principal style
                 if (empty($data['userprincipalname'])) {
-                    throw new \Exception('Could not extract canonical username: userprincipalname field missing');
+                    throw new Exception('Could not extract canonical username: userprincipalname field missing');
                 }
                 return $data['userprincipalname'];
         }
@@ -323,6 +338,7 @@ class LDAPGateway extends Object
      * @param string $password New password to set.
      * @param string $oldPassword Old password is needed to trigger a password change.
      * @throws \Zend\Ldap\Exception\LdapException
+     * @throws Exception
      */
     public function changePassword($dn, $password, $oldPassword)
     {
@@ -334,21 +350,21 @@ class LDAPGateway extends Object
 
         $modifications = [
             [
-                "attrib"  => "unicodePwd",
-                "modtype" => LDAP_MODIFY_BATCH_REMOVE,
-                "values"  => [iconv('UTF-8', 'UTF-16LE', sprintf('"%s"', $oldPassword))],
+                'attrib'  => 'unicodePwd',
+                'modtype' => LDAP_MODIFY_BATCH_REMOVE,
+                'values'  => [iconv('UTF-8', 'UTF-16LE', sprintf('"%s"', $oldPassword))],
             ],
             [
-                "attrib"  => "unicodePwd",
-                "modtype" => LDAP_MODIFY_BATCH_ADD,
-                "values"  => [iconv('UTF-8', 'UTF-16LE', sprintf('"%s"', $password))],
+                'attrib'  => 'unicodePwd',
+                'modtype' => LDAP_MODIFY_BATCH_ADD,
+                'values'  => [iconv('UTF-8', 'UTF-16LE', sprintf('"%s"', $password))],
             ],
         ];
         // Batch attribute operations are not supported by Zend_Ldap, use raw resource.
         $ldapConn = $this->ldap->getResource();
-        \Zend\Stdlib\ErrorHandler::start(E_WARNING);
+        ErrorHandler::start(E_WARNING);
         $succeeded = ldap_modify_batch($ldapConn, $dn, $modifications);
-        \Zend\Stdlib\ErrorHandler::stop();
+        ErrorHandler::stop();
         if (!$succeeded) {
             throw new Exception($this->getLastPasswordError());
         }
@@ -363,6 +379,7 @@ class LDAPGateway extends Object
      * @param string $dn Location to update the entry at.
      * @param string $password New password to set.
      * @throws \Zend\Ldap\Exception\LdapException
+     * @throws Exception
      */
     public function resetPassword($dn, $password)
     {
@@ -371,7 +388,7 @@ class LDAPGateway extends Object
                 $dn,
                 ['unicodePwd' => iconv('UTF-8', 'UTF-16LE', sprintf('"%s"', $password))]
             );
-        } catch(\Zend\Ldap\Exception\LdapException $e) {
+        } catch(LdapException $e) {
             throw new Exception($this->getLastPasswordError());
         }
     }
@@ -436,11 +453,14 @@ class LDAPGateway extends Object
     }
 
     /**
-     * @param \Zend\Ldap\Exception\LdapException
      * @return string
      */
-    private function getLastPasswordError() {
-        $defaultError = _t('LDAPAuthenticator.CANTCHANGEPASSWORD', 'We couldn\'t change your password, please contact an administrator.');
+    private function getLastPasswordError()
+    {
+        $defaultError = _t(
+            'LDAPAuthenticator.CANTCHANGEPASSWORD',
+            'We couldn\'t change your password, please contact an administrator.'
+        );
         $error = '';
         ldap_get_option($this->ldap->getResource(), LDAP_OPT_ERROR_STRING, $error);
 

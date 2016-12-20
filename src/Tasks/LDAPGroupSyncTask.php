@@ -1,11 +1,24 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Tasks;
+
+use SilverStripe\Control\Director;
+use SilverStripe\Dev\BuildTask;
+use SilverStripe\ORM\DB;
+use SilverStripe\Security\Group;
+
 /**
  * Class LDAPGroupSyncTask
  *
  * A task to sync all groups to the site using LDAP.
+ *
+ * @package activedirectory
  */
 class LDAPGroupSyncTask extends BuildTask
 {
+    /**
+     * @var array
+     */
     private static $dependencies = [
         'ldapService' => '%$LDAPService'
     ];
@@ -19,11 +32,18 @@ class LDAPGroupSyncTask extends BuildTask
      */
     private static $destructive = false;
 
+    /**
+     * @return string
+     */
     public function getTitle()
     {
         return _t('LDAPGroupSyncJob.SYNCTITLE', 'Sync all groups from Active Directory');
     }
 
+    /**
+     * {@inheritDoc}
+     * @var HTTPRequest $request
+     */
     public function run($request)
     {
         // get all groups from LDAP, but only get the attributes we need.
@@ -101,6 +121,11 @@ class LDAPGroupSyncTask extends BuildTask
         $this->log(sprintf('Done. Processed %s records. Duration: %s seconds', $count, round($end, 0)));
     }
 
+    /**
+     * Sends a message, formatted either for the CLI or browser
+     *
+     * @param string $message
+     */
     protected function log($message)
     {
         $message = sprintf('[%s] ', date('Y-m-d H:i:s')) . $message;

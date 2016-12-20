@@ -1,4 +1,11 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Services;
+
+use OneLogin_Saml2_Constants;
+use SilverStripe\Core\Object;
+use SilverStripe\Control\Director;
+
 /**
  * Class SAMLConfiguration
  *
@@ -9,6 +16,8 @@
  * how to exchange certificates and which endpoints to use (e.g. see SAMLConfiguration::metadata).
  *
  * https://syncplicity.zendesk.com/hc/en-us/articles/202392814-Single-sign-on-with-ADFS
+ *
+ * @package activedirectory
  */
 class SAMLConfiguration extends Object
 {
@@ -44,8 +53,13 @@ class SAMLConfiguration extends Object
 
         // SERVICE PROVIDER SECTION
         $sp = $this->config()->get('SP');
-        $spCertPath = Director::is_absolute($sp['x509cert']) ? $sp['x509cert'] : sprintf('%s/%s', BASE_PATH, $sp['x509cert']);
-        $spKeyPath = Director::is_absolute($sp['privateKey']) ? $sp['privateKey'] : sprintf('%s/%s', BASE_PATH, $sp['privateKey']);
+        $spCertPath = Director::is_absolute($sp['x509cert'])
+            ? $sp['x509cert']
+            : sprintf('%s/%s', BASE_PATH, $sp['x509cert']);
+        $spKeyPath = Director::is_absolute($sp['privateKey'])
+            ? $sp['privateKey']
+            : sprintf('%s/%s', BASE_PATH, $sp['privateKey']);
+
         $conf['sp']['entityId'] = $sp['entityId'];
         $conf['sp']['assertionConsumerService'] = [
             'url' => $sp['entityId'] . '/saml/acs',
@@ -69,7 +83,9 @@ class SAMLConfiguration extends Object
             ];
         }
 
-        $idpCertPath = Director::is_absolute($idp['x509cert']) ? $idp['x509cert'] : sprintf('%s/%s', BASE_PATH, $idp['x509cert']);
+        $idpCertPath = Director::is_absolute($idp['x509cert'])
+            ? $idp['x509cert']
+            : sprintf('%s/%s', BASE_PATH, $idp['x509cert']);
         $conf['idp']['x509cert'] = file_get_contents($idpCertPath);
 
         // SECURITY SECTION
@@ -80,7 +96,8 @@ class SAMLConfiguration extends Object
             /** signatures and encryptions offered */
             // Indicates that the nameID of the <samlp:logoutRequest> sent by this SP will be encrypted.
             'nameIdEncrypted' => true,
-            // Indicates whether the <samlp:AuthnRequest> messages sent by this SP will be signed. [Metadata of the SP will offer this info]
+            // Indicates whether the <samlp:AuthnRequest> messages sent by this SP will be signed. [Metadata of the
+            // SP will offer this info]
             'authnRequestsSigned' => true,
             // Indicates whether the <samlp:logoutRequest> messages sent by this SP will be signed.
             'logoutRequestSigned' => true,
@@ -108,8 +125,10 @@ class SAMLConfiguration extends Object
 
             // Authentication context.
             // Set to false and no AuthContext will be sent in the AuthNRequest,
-            // Set true or don't present thi parameter and you will get an AuthContext 'exact' 'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'
-            // Set an array with the possible auth context values: array ('urn:oasis:names:tc:SAML:2.0:ac:classes:Password', 'urn:oasis:names:tc:SAML:2.0:ac:classes:X509'),
+            // Set true or don't present thi parameter and you will get an AuthContext
+            // 'exact' 'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'
+            // Set an array with the possible auth context values:
+            // array ('urn:oasis:names:tc:SAML:2.0:ac:classes:Password', 'urn:oasis:names:tc:SAML:2.0:ac:classes:X509'),
             'requestedAuthnContext' => [
                 'urn:federation:authentication:windows',
                 'urn:oasis:names:tc:SAML:2.0:ac:classes:Password',

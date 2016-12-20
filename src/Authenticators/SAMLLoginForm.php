@@ -1,8 +1,21 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Authenticators;
+
+use LoginForm;
+use Session;
+use FieldList;
+use HiddenField;
+use FormAction;
+use Member;
+use Security;
+
 /**
  * Class SAMLLoginForm
  *
  * This not very interesting in itself. It's pretty much boiler-plate code to access the authenticator.
+ *
+ * @package activedirectory
  */
 class SAMLLoginForm extends LoginForm
 {
@@ -15,7 +28,7 @@ class SAMLLoginForm extends LoginForm
     /**
      * @var string
      */
-    protected $authenticator_class = 'SAMLAuthenticator';
+    protected $authenticator_class = 'SilverStripe\\ActiveDirectory\\Authenticators\\SAMLAuthenticator';
 
     /**
      * Constructor

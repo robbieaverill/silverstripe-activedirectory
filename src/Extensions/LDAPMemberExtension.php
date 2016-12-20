@@ -1,8 +1,21 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Extensions;
+
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\LiteralField;
+use SilverStripe\Forms\ReadonlyField;
+use SilverStripe\ORM\DataExtension;
+use SilverStripe\ORM\ValidationResult;
+use SilverStripe\ORM\ValidationException;
+
 /**
  * Class LDAPMemberExtension.
  *
  * Adds mappings from AD attributes to SilverStripe {@link Member} fields.
+ *
+ * @package activedirectory
  */
 class LDAPMemberExtension extends DataExtension
 {
@@ -14,7 +27,7 @@ class LDAPMemberExtension extends DataExtension
         'GUID' => 'Varchar(50)',
         'Username' => 'Varchar(64)',
         'IsExpired' => 'Boolean',
-        'LastSynced' => 'SS_Datetime',
+        'LastSynced' => 'DBDatetime',
     ];
 
     /**
@@ -81,14 +94,20 @@ class LDAPMemberExtension extends DataExtension
     {
         // Redo LDAP metadata fields as read-only and move to LDAP tab.
         $ldapMetadata = [];
-        $fields->replaceField('GUID', $ldapMetadata[] = new ReadonlyField('GUID'));
-        $fields->replaceField('IsExpired', $ldapMetadata[] = new ReadonlyField(
+        $fields->replaceField('GUID', $ldapMetadata[] = ReadonlyField::create('GUID'));
+        $fields->replaceField(
             'IsExpired',
-            _t('LDAPMemberExtension.ISEXPIRED', 'Has user\'s LDAP/AD login expired?'))
+            $ldapMetadata[] = ReadonlyField::create(
+                'IsExpired',
+                _t('LDAPMemberExtension.ISEXPIRED', 'Has user\'s LDAP/AD login expired?')
+            )
         );
-        $fields->replaceField('LastSynced', $ldapMetadata[] = new ReadonlyField(
+        $fields->replaceField(
             'LastSynced',
-            _t('LDAPMemberExtension.LASTSYNCED', 'Last synced'))
+            $ldapMetadata[] = ReadonlyField::create(
+                'LastSynced',
+                _t('LDAPMemberExtension.LASTSYNCED', 'Last synced')
+            )
         );
         $fields->addFieldsToTab('Root.LDAP', $ldapMetadata);
 
@@ -119,7 +138,7 @@ class LDAPMemberExtension extends DataExtension
         if ($message) {
             $fields->addFieldToTab(
                 'Root.Main',
-                new LiteralField(
+                LiteralField::create(
                     'Info',
                     sprintf('<p class="message warning">%s</p>', $message)
                 ),
@@ -128,6 +147,10 @@ class LDAPMemberExtension extends DataExtension
         }
     }
 
+    /**
+     * @param  ValidationResult
+     * @throws ValidationException
+     */
     public function validate(ValidationResult $validationResult)
     {
         // We allow empty Username for registration purposes, as we need to
@@ -152,12 +175,11 @@ class LDAPMemberExtension extends DataExtension
      */
     public function onBeforeWrite()
     {
-        $service = Injector::inst()->get('LDAPService');
-        if (
-            !$service->enabled() ||
-            !$this->owner->config()->create_users_in_ldap ||
-            !$this->owner->Username ||
-            $this->owner->GUID
+        $service = Injector::inst()->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService');
+        if (!$service->enabled()
+            || !$this->owner->config()->create_users_in_ldap
+            || !$this->owner->Username
+            || $this->owner->GUID
         ) {
             return;
         }
@@ -171,11 +193,10 @@ class LDAPMemberExtension extends DataExtension
      */
     public function onAfterWrite()
     {
-        $service = Injector::inst()->get('LDAPService');
-        if (
-            !$service->enabled() ||
-            !$this->owner->config()->update_ldap_from_local ||
-            !$this->owner->GUID
+        $service = Injector::inst()->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService');
+        if (!$service->enabled()
+            || !$this->owner->config()->update_ldap_from_local
+            || !$this->owner->GUID
         ) {
             return;
         }
@@ -184,12 +205,12 @@ class LDAPMemberExtension extends DataExtension
         $service->updateLDAPGroupsForMember($this->owner);
     }
 
-    public function onAfterDelete() {
-        $service = Injector::inst()->get('LDAPService');
-        if (
-            !$service->enabled() ||
-            !$this->owner->config()->delete_users_in_ldap ||
-            !$this->owner->GUID
+    public function onAfterDelete()
+    {
+        $service = Injector::inst()->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService');
+        if (!$service->enabled()
+            || !$this->owner->config()->delete_users_in_ldap
+            || !$this->owner->GUID
         ) {
             return;
         }
@@ -204,7 +225,9 @@ class LDAPMemberExtension extends DataExtension
     public function memberLoggedIn()
     {
         if ($this->owner->GUID) {
-            Injector::inst()->get('LDAPService')->updateMemberFromLDAP($this->owner);
+            Injector::inst()
+                ->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService')
+                ->updateMemberFromLDAP($this->owner);
         }
     }
 }

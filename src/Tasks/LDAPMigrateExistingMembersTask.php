@@ -1,16 +1,33 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Tasks;
+
+use SilverStripe\Dev\BuildTask;
+use SilverStripe\Core\Convert;
+use SilverStripe\Control\Director;
+use SilverStripe\Security\Member;
+
 /**
  * Class LDAPMigrateExistingMembersTask
  *
  * Migrate existing Member records in SilverStripe into "LDAP Members"
  * by matching existing emails with ones that exist in AD.
+ *
+ * @package activedirectory
  */
 class LDAPMigrateExistingMembersTask extends BuildTask
 {
+    /**
+     * @var array
+     */
     private static $dependencies = [
         'ldapService' => '%$LDAPService'
     ];
 
+    /**
+     * {@inheritDoc}
+     * @param HTTPRequest $request
+     */
     public function run($request)
     {
         $users = $this->ldapService->getUsers(['objectguid', 'mail']);
@@ -50,6 +67,11 @@ class LDAPMigrateExistingMembersTask extends BuildTask
         $this->log(sprintf('Done. Migrated %s Member records. Duration: %s seconds', $count, round($end, 0)));
     }
 
+    /**
+     * Sends a message, formatted either for the CLI or browser
+     *
+     * @param string $message
+     */
     protected function log($message)
     {
         $message = sprintf('[%s] ', date('Y-m-d H:i:s')) . $message;

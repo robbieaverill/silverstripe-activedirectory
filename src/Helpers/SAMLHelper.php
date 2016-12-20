@@ -1,4 +1,10 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Helpers;
+
+use OneLogin_Saml2_Auth;
+use SilverStripe\Core\Object;
+
 /**
  * Class SAMLHelper
  *
@@ -25,6 +31,6 @@ class SAMLHelper extends Object
     public function getSAMLauth()
     {
         $samlConfig = $this->SAMLConfService->asArray();
-        return new \OneLogin_Saml2_Auth($samlConfig);
+        return new OneLogin_Saml2_Auth($samlConfig);
     }
 }

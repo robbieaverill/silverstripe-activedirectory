@@ -1,4 +1,15 @@
 <?php
+
+namespace SilverStripe\ActiveDirectory\Authenticators;
+
+use Authenticator;
+use Config;
+use Controller;
+use Form;
+use Injector;
+use Session;
+use Director;
+
 /**
  * Class SAMLAuthenticator
  *
@@ -12,6 +23,8 @@
  * - both, so people have multiple tabbed options in the login form.
  *
  * Both authenticators understand and collaborate through the GUID field on the Member.
+ *
+ * @package activedirectory
  */
 class SAMLAuthenticator extends Authenticator
 {
@@ -25,7 +38,7 @@ class SAMLAuthenticator extends Authenticator
      */
     public static function get_name()
     {
-        return Config::inst()->get('SAMLAuthenticator', 'name');
+        return Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\SAMLAuthenticator', 'name');
     }
 
     /**
@@ -50,7 +63,7 @@ class SAMLAuthenticator extends Authenticator
     public static function authenticate($data, Form $form = null)
     {
         // $data is not used - the form is just one button, with no fields.
-        $auth = Injector::inst()->get('SAMLHelper')->getSAMLAuth();
+        $auth = Injector::inst()->get('SilverStripe\\ActiveDirectory\\Helpers\\SAMLHelper')->getSAMLAuth();
         Session::set('BackURL', isset($data['BackURL']) ? $data['BackURL'] : null);
         Session::save();
         $auth->login(Director::absoluteBaseURL().'saml/');

@@ -2,6 +2,11 @@
 
 ## 3.0.0 (Unreleased)
 
+New module requirements:
+
+ - Minimum SilverStripe framework version: 4.0 or above
+ - Minimum PHP version: 5.5 or above
+
 Adding features to allow writing Member data back to LDAP.
 See [Writing LDAP data from SilverStripe](docs/en/developer.md#writing-ldap-data-from-silverstripe).
 
