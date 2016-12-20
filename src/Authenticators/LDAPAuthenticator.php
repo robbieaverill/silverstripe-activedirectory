@@ -5,7 +5,7 @@ namespace SilverStripe\ActiveDirectory\Authenticators;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Email\Email;
 use SilverStripe\Control\Session;
-use SilverStripe\Core\Cofig\Config;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Forms\Form;
 use SilverStripe\Security\Authenticator;
@@ -84,7 +84,7 @@ class LDAPAuthenticator extends Authenticator
     {
         $service = Injector::inst()->get('SilverStripe\\ActiveDirectory\\Services\\LDAPService');
         $login = trim($data['Login']);
-        if (Email::validEmailAddress($login)) {
+        if (Email::is_valid_address($login)) {
             if (Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'allow_email_login') != 'yes') {
                 $form->sessionMessage(
                     _t(

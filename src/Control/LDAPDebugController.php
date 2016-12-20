@@ -50,11 +50,11 @@ class LDAPDebugController extends ContentController
     }
 
     /**
-     * @param SS_HTTPRequest $request
+     * @param HTTPRequest $request
      *
      * @return string
      */
-    public function index(\SS_HTTPRequest $request)
+    public function index(HTTPRequest $request)
     {
         return $this->renderWith(['SilverStripe\\ActiveDirectory\\Control\\LDAPDebugController']);
     }

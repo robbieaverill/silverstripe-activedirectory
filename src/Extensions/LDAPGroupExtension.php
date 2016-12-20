@@ -80,7 +80,7 @@ class LDAPGroupExtension extends DataExtension
             );
             $fields->addFieldToTab(
                 'Root.Members',
-                new LiteralField(
+                LiteralField::create(
                     'Info',
                     sprintf('<p class="message warning">%s</p>', $message)
                 ),

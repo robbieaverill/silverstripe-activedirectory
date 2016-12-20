@@ -911,13 +911,13 @@ class LDAPService extends Object implements Flushable
      */
     public function setPassword(Member $member, $password, $oldPassword = null)
     {
-        $validationResult = ValidationResult::create(true);
+        $validationResult = ValidationResult::create();
 
         $this->extend('onBeforeSetPassword', $member, $password, $validationResult);
 
         if (!$member->GUID) {
             $this->getLogger()->warn(sprintf('Cannot update Member ID %s, GUID not set', $member->ID));
-            $validationResult->error(
+            $validationResult->addError(
                 _t(
                     'LDAPAuthenticator.NOUSER',
                     'Your account hasn\'t been setup properly, please contact an administrator.'
@@ -928,7 +928,7 @@ class LDAPService extends Object implements Flushable
 
         $userData = $this->getUserByGUID($member->GUID);
         if (empty($userData['distinguishedname'])) {
-            $validationResult->error(
+            $validationResult->addError(
                 _t(
                     'LDAPAuthenticator.NOUSER',
                     'Your account hasn\'t been setup properly, please contact an administrator.'
@@ -947,7 +947,7 @@ class LDAPService extends Object implements Flushable
             }
             $this->extend('onAfterSetPassword', $member, $password, $validationResult);
         } catch (Exception $e) {
-            $validationResult->error($e->getMessage());
+            $validationResult->addError($e->getMessage());
         }
 
         return $validationResult;

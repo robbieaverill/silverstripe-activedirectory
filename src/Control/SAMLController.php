@@ -55,13 +55,13 @@ class SAMLController extends Controller
         $error = $auth->getLastErrorReason();
         if (!empty($error)) {
             $this->getLogger()->error($error);
-            Form::messageForForm("SAMLLoginForm_LoginForm", "Authentication error: '{$error}'", 'bad');
+            Form::messageForForm('SAMLLoginForm_LoginForm', "Authentication error: '{$error}'", 'bad');
             Session::save();
             return $this->getRedirect();
         }
 
         if (!$auth->isAuthenticated()) {
-            Form::messageForForm("SAMLLoginForm_LoginForm", _t('Member.ERRORWRONGCRED'), 'bad');
+            Form::messageForForm('SAMLLoginForm_LoginForm', _t('Member.ERRORWRONGCRED'), 'bad');
             Session::save();
             return $this->getRedirect();
         }
@@ -69,7 +69,7 @@ class SAMLController extends Controller
         $decodedNameId = base64_decode($auth->getNameId());
         // check that the NameID is a binary string (which signals that it is a guid
         if (ctype_print($decodedNameId)) {
-            Form::messageForForm("SAMLLoginForm_LoginForm", "Name ID provided by IdP is not a binary GUID.", 'bad');
+            Form::messageForForm('SAMLLoginForm_LoginForm', 'Name ID provided by IdP is not a binary GUID.', 'bad');
             Session::save();
             return $this->getRedirect();
         }
@@ -79,7 +79,7 @@ class SAMLController extends Controller
         if (!LDAPUtil::validGuid($guid)) {
             $errorMessage = "Not a valid GUID '{$guid}' recieved from server.";
             $this->getLogger()->error($errorMessage);
-            Form::messageForForm("SAMLLoginForm_LoginForm", $errorMessage, 'bad');
+            Form::messageForForm('SAMLLoginForm_LoginForm', $errorMessage, 'bad');
             Session::save();
             return $this->getRedirect();
         }

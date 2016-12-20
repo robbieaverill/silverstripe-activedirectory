@@ -7,7 +7,7 @@ use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Convert;
 use SilverStripe\Core\Object;
-use SilverStirpe\Core\Config\Config;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Forms\EmailField;
 use SilverStripe\Forms\FormAction;
 use SilverStripe\Forms\FieldList;
@@ -70,27 +70,23 @@ class LDAPSecurityController extends Security
             return $response;
         }
 
-        if (Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'allow_email_login')==='yes') {
+        if (Config::inst()->get('SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator', 'allow_email_login') === 'yes') {
             $customisedController = $controller->customise([
                 'Content' =>
-                    '<p>' .
                     _t(
                         'LDAPSecurityController.NOTERESETPASSWORDUSERNAMEOREMAIL',
                         'Enter your username or your email address and we will send you a link with which '
                         . 'you can reset your password'
-                    ) .
-                    '</p>',
+                    ),
                 'Form' => $this->LostPasswordForm(),
             ]);
         } else {
             $customisedController = $controller->customise([
                 'Content' =>
-                    '<p>' .
                     _t(
                         'LDAPSecurityController.NOTERESETPASSWORDUSERNAME',
                         'Enter your username and we will send you a link with which you can reset your password'
-                    ) .
-                    '</p>',
+                    ),
                 'Form' => $this->LostPasswordForm(),
             ]);
         }
@@ -111,8 +107,8 @@ class LDAPSecurityController extends Security
         return LDAPLoginForm::create(
             $this,
             'LostPasswordForm',
-            new FieldList([$email]),
-            new FieldList([$action]),
+            FieldList::create([$email]),
+            FieldList::create([$action]),
             false
         );
     }
@@ -151,12 +147,11 @@ class LDAPSecurityController extends Security
                 ['username' => $username]
             ),
             'Content' =>
-                '<p>'
-                . _t(
+                _t(
                     'LDAPSecurity.PASSWORDSENTTEXT',
                     "Thank you! A reset link has been sent to '{username}', provided an account exists.",
                     ['username' => $username]
-                ) . '</p>',
+                ),
             'Username' => $username
         ]);
         return $customisedController->renderWith($this->getTemplatesFor('passwordsent'));
