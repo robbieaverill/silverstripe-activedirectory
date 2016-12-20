@@ -135,14 +135,18 @@ ADFS should now be configured to extract the SP certificate from SilverStripe's 
 
 ## Configure SilverStripe Authenticators
 
-To be able to use the SAML or the LDAP authenticator you will need to set them up in the `mysite/config.php`.
+To be able to use the SAML or the LDAP authenticator you will need to set them up in the `mysite/_config.php`.
 
 You can choose which authenticators you would like to display on the login form.
 
     // Show the SAML Login button on login form
-    \SilverStripe\Security\Authenticator::register_authenticator('SAMLAuthenticator');
+    \SilverStripe\Security\Authenticator::register_authenticator(
+        'SilverStripe\\ActiveDirectory\\Authenticators\\SAMLAuthenticator'
+    );
     // Show the LDAP Login form
-    \SilverStripe\Security\Authenticator::register_authenticator('LDAPAuthenticator');
+    \SilverStripe\Security\Authenticator::register_authenticator(
+        'SilverStripe\\ActiveDirectory\\Authenticators\\LDAPAuthenticator'
+    );
 
 You can unregister the default authenticator by adding this line:
 
@@ -154,7 +158,9 @@ To prevent locking yourself out, before you remove the "MemberAuthenticator" mak
 
 If you register the SAMLAuthenticator as the default authenticator, it will automatically send users to the ADFS login server when they are required to login.
 
-    \SilverStripe\Security\Authenticator::set_default_authenticator('SAMLAuthenticator');
+    \SilverStripe\Security\Authenticator::set_default_authenticator(
+        'SilverStripe\\ActiveDirectory\\Authenticators\\SAMLAuthenticator'
+    );
 
 Should you need to access the login form with all the configured Authenticators, go to:
 

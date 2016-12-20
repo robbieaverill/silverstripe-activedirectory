@@ -21,7 +21,7 @@ class LDAPMigrateExistingMembersTask extends BuildTask
      * @var array
      */
     private static $dependencies = [
-        'ldapService' => '%$LDAPService'
+        'ldapService' => '%$SilverStripe\\ActiveDirectory\\Services\\LDAPService'
     ];
 
     /**

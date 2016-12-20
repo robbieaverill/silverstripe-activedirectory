@@ -44,7 +44,7 @@ class LDAPGroupMapping extends DataObject
      * @var array
      */
     private static $dependencies = [
-        'ldapService' => '%$LDAPService'
+        'ldapService' => '%$SilverStripe\\ActiveDirectory\\Services\\LDAPService'
     ];
 
     /**

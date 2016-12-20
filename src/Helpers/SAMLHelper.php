@@ -17,11 +17,11 @@ class SAMLHelper extends Object
      * @var array
      */
     public static $dependencies = [
-        'SAMLConfService' => '%$SAMLConfService',
+        'SAMLConfService' => '%$SilverStripe\\ActiveDirectory\\Services\\SAMLConfiguration',
     ];
 
     /**
-     * @var SAMLConfService
+     * @var SAMLConfiguration
      */
     public $SAMLConfService;
 

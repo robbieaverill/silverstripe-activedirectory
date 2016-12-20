@@ -41,7 +41,7 @@ class LDAPService extends Object implements Flushable
      * @var array
      */
     private static $dependencies = [
-        'gateway' => '%$LDAPGateway'
+        'gateway' => '%$SilverStripe\\ActiveDirectory\\Model\\LDAPGateway'
     ];
 
     /**
