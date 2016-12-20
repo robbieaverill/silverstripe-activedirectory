@@ -53,7 +53,7 @@ class LDAPMemberSyncTask extends BuildTask
         // especially in the case where getUser() would return a lot of users
         $users = $this->ldapService->getUsers(array_merge(
             ['objectguid', 'samaccountname', 'useraccountcontrol', 'memberof'],
-            array_keys(Config::inst()->get('Member', 'ldap_field_mappings'))
+            array_keys(Config::inst()->get('SilverStripe\\Security\\Member', 'ldap_field_mappings'))
         ));
 
         $start = time();
