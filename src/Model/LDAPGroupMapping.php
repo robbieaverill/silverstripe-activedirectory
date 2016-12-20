@@ -13,6 +13,12 @@ use SilverStripe\ORM\DataObject;
 class LDAPGroupMapping extends DataObject
 {
     /**
+     * {@inheritDoc}
+     * @var string
+     */
+    private static $table_name = 'LDAPGroupMapping';
+
+    /**
      * @var array
      */
     private static $db = [
