@@ -17,6 +17,12 @@ use SilverStripe\Security\Group;
 class LDAPGroupSyncTask extends BuildTask
 {
     /**
+     * {@inheritDoc}
+     * @var string
+     */
+    private static $segment = 'LDAPGroupSyncTask';
+
+    /**
      * @var array
      */
     private static $dependencies = [

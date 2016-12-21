@@ -18,6 +18,12 @@ use SilverStripe\Security\Member;
 class LDAPMigrateExistingMembersTask extends BuildTask
 {
     /**
+     * {@inheritDoc}
+     * @var string
+     */
+    private static $segment = 'LDAPMigrateExistingMembersTask';
+
+    /**
      * @var array
      */
     private static $dependencies = [

@@ -19,6 +19,12 @@ use SilverStripe\Security\Member;
 class LDAPMemberSyncTask extends BuildTask
 {
     /**
+     * {@inheritDoc}
+     * @var string
+     */
+    private static $segment = 'LDAPMemberSyncTask';
+
+    /**
      * @var array
      */
     private static $dependencies = [
